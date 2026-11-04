@@ -104,3 +104,16 @@ def test_dashboard_y_export(client, tenant_a):
     assert d["forecast_por_mes"][0]["mes"] == "2026-12"
     r = client.get(f"{W(tenant_a)}/export/excel", headers=tenant_a["headers"])
     assert r.status_code == 200 and r.content[:2] == b"PK"
+
+
+def test_cron_tick_requiere_secreto(client, monkeypatch):
+    from app.config import get_settings
+    monkeypatch.setattr(get_settings(), "cron_secret", "s3cr3t")
+    assert client.get("/api/cron/tick").status_code == 401
+    assert client.get("/api/cron/tick", headers={"Authorization": "Bearer mal"}).status_code == 401
+    r = client.get("/api/cron/tick", headers={"Authorization": "Bearer s3cr3t"})
+    assert r.status_code == 200 and "workspaces" in r.json()
+
+
+def test_cron_tick_sin_secreto_configurado_esta_cerrado(client):
+    assert client.get("/api/cron/tick", headers={"Authorization": "Bearer "}).status_code == 401

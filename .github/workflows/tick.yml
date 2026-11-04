@@ -1,0 +1,13 @@
+# Dispara el scheduler cada ~15 min cuando el backend corre en Vercel (serverless, sin proceso permanente).
+# Requiere los secrets del repo: API_URL (https://tu-api.vercel.app) y CRON_SECRET (igual al de Vercel).
+# Alternativa: Vercel Cron (plan Pro) o cron-job.org llamando a GET {API_URL}/api/cron/tick con Authorization: Bearer <CRON_SECRET>.
+name: Scheduler tick
+on:
+  schedule: [{ cron: "*/15 * * * *" }]
+  workflow_dispatch:
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    if: ${{ vars.ENABLE_TICK == 'true' }}
+    steps:
+      - run: curl -fsS -m 55 -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" "${{ secrets.API_URL }}/api/cron/tick"

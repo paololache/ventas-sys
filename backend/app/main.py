@@ -11,7 +11,7 @@ from sqlalchemy import select
 from .config import get_settings
 from .db import SessionLocal
 from .models import User
-from .routers import auth_admin, telegram, workspace
+from .routers import auth_admin, cron, telegram, workspace
 from .security import hash_password
 from .services.scheduler import run_tick
 
@@ -56,6 +56,7 @@ app.add_middleware(CORSMiddleware, allow_origins=[o.strip() for o in get_setting
 app.include_router(auth_admin.router)
 app.include_router(workspace.router)
 app.include_router(telegram.router)
+app.include_router(cron.router)
 
 
 @app.get("/health")

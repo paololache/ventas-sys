@@ -3,10 +3,10 @@ from sqlalchemy import engine_from_config, pool
 
 from app import models  # noqa: F401  (registra las tablas)
 from app.config import get_settings
-from app.db import Base
+from app.db import Base, normalize_url
 
 config = context.config
-config.set_main_option("sqlalchemy.url", get_settings().database_url)
+config.set_main_option("sqlalchemy.url", normalize_url(get_settings().database_url).replace("%", "%%"))
 target_metadata = Base.metadata
 
 

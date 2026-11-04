@@ -99,7 +99,51 @@ se calculan con las mismas reglas del motor, por lo que coinciden con las alerta
 1. Activa la verificación en dos pasos en tu cuenta de Google → *Contraseñas de aplicaciones* → genera una de 16 caracteres.
 2. En *Empresas → SMTP*: host `smtp.gmail.com`, puerto `587`, usuario = tu correo, contraseña = la de aplicación, remitente = tu correo.
 
-## Desplegar 24/7
+## Desplegar en Vercel
+
+Son **dos proyectos de Vercel** desde el mismo repositorio (importa el repo dos veces):
+
+| Proyecto | *Root Directory* | Qué es |
+|---|---|---|
+| `crm-web` | `frontend` | Next.js (autodetectado) |
+| `crm-api` | `backend` | FastAPI como función serverless (`api/index.py` + `vercel.json`) |
+
+**1. Base de datos** (Vercel no tiene disco persistente: SQLite no sirve). Crea un Postgres gratuito en **Neon** o **Supabase** y copia la URL
+(usa la del *pooler* y con `?sslmode=require`). Crea las tablas **una vez** desde tu máquina:
+
+```bash
+cd backend && pip install -r requirements.txt
+DATABASE_URL="postgresql://usuario:clave@host/db?sslmode=require" alembic upgrade head
+```
+
+**2. Proyecto `crm-api`** — variables de entorno:
+
+| Variable | Valor |
+|---|---|
+| `DATABASE_URL` | la URL de Neon/Supabase |
+| `SECRET_KEY` | cadena larga aleatoria |
+| `BOOTSTRAP_ADMIN_EMAIL` / `BOOTSTRAP_ADMIN_PASSWORD` | superadmin de la plataforma |
+| `SCHEDULER_ENABLED` | `false` (no hay proceso permanente) |
+| `CRON_SECRET` | cadena aleatoria (protege `/api/cron/tick`) |
+| `CORS_ORIGINS` | URL del frontend, p. ej. `https://crm-web.vercel.app` |
+| `PUBLIC_URL` | URL del frontend |
+| `API_PUBLIC_URL` | URL de este proyecto (para el webhook de Telegram, ya es HTTPS) |
+
+**3. Proyecto `crm-web`** — una variable: `NEXT_PUBLIC_API_URL` = URL del proyecto `crm-api`. (Se incrusta en el *build*: si la cambias, redeploya.)
+
+**4. El motor proactivo en serverless.** Sin proceso permanente, algo externo debe llamar cada ~15 min a `GET /api/cron/tick`
+con `Authorization: Bearer <CRON_SECRET>`. Elige una:
+
+* **GitHub Actions (gratis, incluido en el repo)**: en *Settings → Secrets* crea `API_URL` y `CRON_SECRET`, y en *Variables* `ENABLE_TICK=true`
+  (workflow `.github/workflows/tick.yml`; GitHub puede retrasar unos minutos las ejecuciones programadas).
+* **Vercel Cron** (requiere plan Pro para frecuencia < 1 día): añade a `backend/vercel.json`
+  `"crons": [{ "path": "/api/cron/tick", "schedule": "*/15 * * * *" }]` y define `CRON_SECRET` (Vercel lo envía solo).
+* **cron-job.org** u otro pinger externo.
+
+Después: entra al frontend con el superadmin, crea la empresa y registra el webhook de Telegram desde *Empresas*.
+Límites: la función tiene `maxDuration` 60 s; con muchas empresas/espacios conviene dividir el *tick* o pasar a un VPS/Railway.
+
+## Desplegar 24/7 (alternativa: VPS / Railway / Render)
 
 Si corre sólo en tu laptop apagada **no avisa**. Opciones baratas:
 

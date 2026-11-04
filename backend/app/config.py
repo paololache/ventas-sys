@@ -14,7 +14,9 @@ class Settings(BaseSettings):
     api_public_url: str = "http://localhost:8000"  # base para webhooks de Telegram
     cors_origins: str = "http://localhost:3000"
 
+    # En Vercel (serverless) no hay proceso permanente: desactiva el scheduler y llama a /api/cron/tick
     scheduler_enabled: bool = True
+    cron_secret: str = ""  # protege /api/cron/tick (Vercel Cron lo envía como Bearer)
     scheduler_interval_minutes: int = 15
 
     # Fallback SMTP global (cada empresa puede definir el suyo en su configuración)

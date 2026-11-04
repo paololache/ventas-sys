@@ -1,3 +1,4 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = { output: "standalone" };
+// "standalone" sólo para Docker; Vercel hace su propio empaquetado
+const nextConfig = process.env.VERCEL ? {} : { output: "standalone" };
 export default nextConfig;
