@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+*.db
+node_modules/
+.next/
+.pytest_cache/
+frontend/next-env.d.ts
