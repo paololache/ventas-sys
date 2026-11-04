@@ -29,7 +29,7 @@ def test_relativas():
 
 def test_pasadas_se_descartan_y_year_roll():
     assert fechas("lo hice el 01/11") == []
-    assert fechas("el 05/01") == [date(2027, 1, 5)]  # pasó hace > 180 d → año siguiente? no: 05/01/2026 es hace 302 d
+    assert fechas("el 05/01") == [date(2027, 1, 5)]  # 05/01/2026 pasó hace >180 d: se asume el año siguiente
 
 
 def test_primera_futura():
