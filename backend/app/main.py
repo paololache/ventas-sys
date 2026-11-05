@@ -37,7 +37,10 @@ def _job():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    bootstrap_admin()
+    try:
+        bootstrap_admin()
+    except Exception:  # BD mal configurada: la API debe arrancar igual para poder diagnosticar (/health/db)
+        log.exception("bootstrap_admin falló al arrancar")
     sched = None
     s = get_settings()
     if s.scheduler_enabled:
@@ -62,3 +65,29 @@ app.include_router(cron.router)
 @app.get("/health")
 def health():
     return {"ok": True}
+
+
+@app.get("/health/db")
+def health_db():
+    """Diagnóstico de conexión: muestra host/puerto (sin usuario ni contraseña) y el tipo de error, si lo hay."""
+    from sqlalchemy import text
+    from sqlalchemy.engine import make_url
+
+    from .db import engine, normalize_url
+
+    info: dict = {"configured_driver": None}
+    try:
+        u = make_url(normalize_url(get_settings().database_url))
+        info.update(configured_driver=u.drivername, host=u.host, port=u.port, database=u.database,
+                    user_has_project_suffix=("." in (u.username or "")), uses_pooler=("pooler.supabase.com" in (u.host or "")))
+    except Exception as e:
+        return {"ok": False, "error": f"URL ilegible ({type(e).__name__}). Revisa caracteres especiales en la contraseña.", **info}
+    try:
+        with engine.connect() as c:
+            c.execute(text("select 1"))
+        tables = None
+        with engine.connect() as c:
+            tables = c.execute(text("select count(*) from users")).scalar()
+        return {"ok": True, "users": tables, **info}
+    except Exception as e:
+        return {"ok": False, "error": type(e).__name__, "hint": "sin host => URL mal formada; 'password authentication' => clave/usuario; 'relation does not exist' => faltan tablas", **info}

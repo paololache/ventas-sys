@@ -131,3 +131,8 @@ def test_postgres_url_como_alternativa(monkeypatch):
     monkeypatch.delenv("DATABASE_URL", raising=False)
     monkeypatch.setenv("POSTGRES_URL", "postgres://u:p@h/db")
     assert Settings(_env_file=None).database_url == "postgres://u:p@h/db"
+
+
+def test_health_db_no_expone_credenciales(client):
+    r = client.get("/health/db").json()
+    assert r["ok"] is True and "password" not in str(r).lower() and r["configured_driver"].startswith("sqlite")
