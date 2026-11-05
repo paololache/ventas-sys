@@ -4,7 +4,9 @@ import logging
 from contextlib import asynccontextmanager
 
 from apscheduler.schedulers.background import BackgroundScheduler
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 
@@ -56,6 +58,16 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="CRM comercial proactivo", version="1.0.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=[o.strip() for o in get_settings().cors_origins.split(",")], allow_credentials=True,
                    allow_methods=["*"], allow_headers=["*"])
+@app.exception_handler(StarletteHTTPException)
+async def http_exc(request: Request, exc: StarletteHTTPException):
+    body = {"detail": exc.detail}
+    if exc.status_code == 404 and not request.url.path.startswith("/api/"):
+        # diagnóstico de despliegue: qué ruta recibió realmente la función (sin datos sensibles)
+        body["path_seen"] = request.url.path
+        body["version"] = "2026-11-05-diag"
+    return JSONResponse(body, status_code=exc.status_code, headers=getattr(exc, "headers", None))
+
+
 app.include_router(auth_admin.router)
 app.include_router(workspace.router)
 app.include_router(telegram.router)
