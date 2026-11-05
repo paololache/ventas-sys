@@ -62,6 +62,11 @@ app.include_router(telegram.router)
 app.include_router(cron.router)
 
 
+@app.get("/", include_in_schema=False)
+def root():
+    return {"app": "CRM comercial proactivo", "docs": "/docs", "health": "/health", "db": "/health/db"}
+
+
 @app.get("/health")
 def health():
     return {"ok": True}
