@@ -108,7 +108,7 @@ Son **dos proyectos de Vercel** desde el mismo repositorio (importa el repo dos 
 | `crm-web` | `frontend` | Next.js (autodetectado) |
 | `crm-api` | `backend` | FastAPI como función serverless (`api/index.py` + `vercel.json`) |
 
-**1. Base de datos** (Vercel no tiene disco persistente: SQLite no sirve). Crea un Postgres gratuito en **Neon** o **Supabase** y copia la URL
+**1. Base de datos** (con Supabase: usa el *Session pooler* para migrar y el *Transaction pooler* en Vercel; ver `docs/CONECTAR_VERCEL_SUPABASE.md`) (Vercel no tiene disco persistente: SQLite no sirve). Crea un Postgres gratuito en **Neon** o **Supabase** y copia la URL
 (usa la del *pooler* y con `?sslmode=require`). Crea las tablas **una vez** desde tu máquina:
 
 ```bash
