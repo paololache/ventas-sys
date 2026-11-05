@@ -116,7 +116,7 @@ cd backend && pip install -r requirements.txt
 DATABASE_URL="postgresql://usuario:clave@host/db?sslmode=require" alembic upgrade head
 ```
 
-**2. Proyecto `crm-api`** — variables de entorno:
+**2. Proyecto `crm-api`** — variables de entorno (si usas la integración Vercel↔Supabase, `POSTGRES_URL` se acepta en lugar de `DATABASE_URL`; para migrar usa `POSTGRES_URL_NON_POOLING`):
 
 | Variable | Valor |
 |---|---|

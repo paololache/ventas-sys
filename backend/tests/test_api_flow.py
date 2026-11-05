@@ -117,3 +117,17 @@ def test_cron_tick_requiere_secreto(client, monkeypatch):
 
 def test_cron_tick_sin_secreto_configurado_esta_cerrado(client):
     assert client.get("/api/cron/tick", headers={"Authorization": "Bearer "}).status_code == 401
+
+
+def test_normalize_url_supabase():
+    from app.db import normalize_url
+    u = normalize_url("postgres://postgres.abc:pw@aws-0-us-east-1.pooler.supabase.com:6543/postgres?sslmode=require&supa=base-pooler.x")
+    assert u == "postgresql+psycopg2://postgres.abc:pw@aws-0-us-east-1.pooler.supabase.com:6543/postgres?sslmode=require"
+    assert normalize_url("sqlite://") == "sqlite://"
+
+
+def test_postgres_url_como_alternativa(monkeypatch):
+    from app.config import Settings
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    monkeypatch.setenv("POSTGRES_URL", "postgres://u:p@h/db")
+    assert Settings(_env_file=None).database_url == "postgres://u:p@h/db"

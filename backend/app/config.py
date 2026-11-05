@@ -1,12 +1,14 @@
 from functools import lru_cache
 
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    database_url: str = "sqlite:///./crm.db"
+    # La integración Vercel↔Supabase inyecta POSTGRES_URL (pooler); DATABASE_URL tiene prioridad si existe
+    database_url: str = Field("sqlite:///./crm.db", validation_alias=AliasChoices("DATABASE_URL", "POSTGRES_URL"))
     secret_key: str = "cambia-esto-en-produccion"
     token_expire_minutes: int = 60 * 24 * 7
     default_timezone: str = "America/Lima"

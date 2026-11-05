@@ -15,7 +15,12 @@ def normalize_url(url: str) -> str:
     """Neon/Supabase/Heroku entregan postgres:// o postgresql://; SQLAlchemy necesita el driver explícito."""
     for prefix in ("postgres://", "postgresql://"):
         if url.startswith(prefix):
-            return "postgresql+psycopg2://" + url[len(prefix):]
+            url = "postgresql+psycopg2://" + url[len(prefix):]
+            break
+    if "?" in url:  # la integración de Supabase agrega "supa=base-pooler.x", que psycopg2 no acepta
+        base, q = url.split("?", 1)
+        q = "&".join(p for p in q.split("&") if not p.startswith("supa="))
+        url = base + ("?" + q if q else "")
     return url
 
 
